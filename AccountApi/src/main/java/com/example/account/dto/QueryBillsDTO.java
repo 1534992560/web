@@ -37,6 +37,16 @@ public class QueryBillsDTO {
     private String consumptionName;
 
     /**
+     * 收入类型Id
+     */
+    private Integer incomeId;
+
+    /**
+     * 收入类型Name
+     */
+    private String incomeName;
+
+    /**
      * 账单类型 1.消费 2.收入
      */
     private Integer billType;

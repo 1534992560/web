@@ -37,6 +37,11 @@ public class BillManageParam extends BasePageParam{
     private Integer consumptionId;
 
     /**
+     * 收入类型Id
+     */
+    private Integer incomeId;
+
+    /**
      * 账单类型 1.消费 2.收入
      */
     private Integer billType;

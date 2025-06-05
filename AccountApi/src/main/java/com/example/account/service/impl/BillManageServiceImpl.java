@@ -37,9 +37,8 @@ public class BillManageServiceImpl implements BillManageService {
     @Override
     public Result addBill(BillManageParam param) {
         Date date = new Date();
-        //新增消费账单
+        //新增账单
         Bill record = new Bill();
-        record.setConsumptionId(param.getConsumptionId());
         record.setUserId(param.getUserId());
         record.setHouseId(param.getHouseId());
         record.setMoney(param.getMoney());
@@ -49,6 +48,16 @@ public class BillManageServiceImpl implements BillManageService {
         record.setCreateTime(date);
         record.setUpdateTime(date);
         record.setIsDelete(0);
+        
+        // 根据账单类型设置相应的字段
+        if (param.getBillType() == 1) { // 支出类型
+            record.setConsumptionId(param.getConsumptionId());
+            record.setIncomeId(0); // 收入类型ID置为0
+        } else if (param.getBillType() == 2) { // 收入类型
+            record.setIncomeId(param.getIncomeId());
+            record.setConsumptionId(0); // 支出类型ID置为0
+        }
+        
         int i = billMapper.insertSelective(record);
 
         if(i > 0){
@@ -92,11 +101,21 @@ public class BillManageServiceImpl implements BillManageService {
     public Result updateBill(BillManageParam param) {
         Bill record = new Bill();
         record.setId(param.getId());
-        record.setConsumptionId(param.getConsumptionId());
         record.setRemark(param.getRemark());
         record.setMoney(param.getMoney());
         record.setRecordTime(DateUtil.stringToDate(param.getRecordTime(), DateUtil.fullDayFormat));
         record.setUpdateTime(new Date());
+        record.setBillType(param.getBillType());
+        
+        // 根据账单类型设置相应的字段
+        if (param.getBillType() == 1) { // 支出类型
+            record.setConsumptionId(param.getConsumptionId());
+            record.setIncomeId(0); // 收入类型ID置为0
+        } else if (param.getBillType() == 2) { // 收入类型
+            record.setIncomeId(param.getIncomeId());
+            record.setConsumptionId(0); // 支出类型ID置为0
+        }
+        
         int i = billMapper.updateByPrimaryKeySelective(record);
         if(i <= 0){
             return Result.failure(ReturnCode.UPDATE_BILL_FAIL);

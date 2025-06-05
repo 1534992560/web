@@ -10,6 +10,8 @@ public class Bill implements Serializable {
 
     private Integer consumptionId;
 
+    private Integer incomeId;
+
     private String remark;
 
     private Date recordTime;
@@ -50,6 +52,14 @@ public class Bill implements Serializable {
 
     public void setConsumptionId(Integer consumptionId) {
         this.consumptionId = consumptionId;
+    }
+
+    public Integer getIncomeId() {
+        return incomeId;
+    }
+
+    public void setIncomeId(Integer incomeId) {
+        this.incomeId = incomeId;
     }
 
     public String getRemark() {

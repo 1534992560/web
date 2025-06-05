@@ -24,6 +24,10 @@
           <i class="el-icon-tickets"></i>
           <span>消费类型</span>
         </el-menu-item>
+        <el-menu-item index="5" @click="changeRoute('/system/incomeManage')">
+          <i class="el-icon-money"></i>
+          <span>收入类型</span>
+        </el-menu-item>
         <el-menu-item
             v-if="isAdmin"
             index="3"
@@ -89,6 +93,7 @@ import UserManage from '../UserManage/UserManage.vue'
 import Statistics from '../Statistics/Statistics.vue'
 import AccountsManage from '../AccountsManage/AccountsManage.vue'
 import ConsumeManage from '../ConsumeManage/ConsumeManage.vue'
+import IncomeManage from '../IncomeManage/IncomeManage.vue'
 import { put } from '../../utils/http'
 import { Message } from 'element-ui'
 
@@ -98,7 +103,8 @@ export default {
     UserManage,
     Statistics,
     AccountsManage,
-    ConsumeManage
+    ConsumeManage,
+    IncomeManage
   },
   data() {
     const validateConfirmPassword = (rule, value, callback) => {
@@ -142,6 +148,7 @@ export default {
       if (this.path.includes('statistics')) return 'Statistics'
       if (this.path.includes('userManage')) return 'UserManage'
       if (this.path.includes('consumeManage')) return 'ConsumeManage'
+      if (this.path.includes('incomeManage')) return 'IncomeManage'
       return 'AccountsManage'
     }
   },
@@ -150,7 +157,8 @@ export default {
       '#/system/accountManage': '1',
       '#/system/statistics': '2',
       '#/system/userManage': '3',
-      '#/system/consumeManage': '4'
+      '#/system/consumeManage': '4',
+      '#/system/incomeManage': '5'
     }
     this.defaultMenu = router[window.location.hash]
     this.updateAdminStatus()

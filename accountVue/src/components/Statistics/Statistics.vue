@@ -50,8 +50,11 @@
         <div id="lineChart" class="chart"></div>
       </div>
       <div class="chart-wrapper">
-        <div id="pieChart" class="chart"></div>
-    </div>
+        <div id="expensePieChart" class="chart"></div>
+      </div>
+      <div class="chart-wrapper">
+        <div id="incomePieChart" class="chart"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -66,7 +69,8 @@ export default {
       timeType: '1',
       allData: {},
       lineData: {},
-      pieData: [],
+      expensePieData: [],
+      incomePieData: [],
       userList: [
         {
           id: '000000',
@@ -155,13 +159,13 @@ export default {
         ],
       })
     },
-    drawPie() {
-      let myChart = this.$echarts.init(document.getElementById('pieChart'))
-      
-      const option = {
+    drawPieCharts() {
+      // 绘制支出饼图
+      let expensePieChart = this.$echarts.init(document.getElementById('expensePieChart'))
+      const expenseOption = {
         title: {
-          text: '消费类型',
-          subtext: this.pieData.length === 0 ? '暂无消费数据' : '',
+          text: '支出类型分布',
+          subtext: this.expensePieData.length === 0 ? '暂无支出数据' : '',
           left: 'center'
         },
         tooltip: {
@@ -171,7 +175,7 @@ export default {
         legend: {
           orient: 'vertical',
           left: 'left',
-          data: this.pieData.map((item) => item.name)
+          data: this.expensePieData.map((item) => item.name)
         },
         color: [
           '#85c7de',
@@ -190,11 +194,11 @@ export default {
         ],
         series: [
           {
-            name: '消费金额',
+            name: '支出金额',
             type: 'pie',
             radius: '65%',
             center: ['50%', '60%'],
-            data: this.pieData,
+            data: this.expensePieData,
             emphasis: {
               itemStyle: {
                 shadowBlur: 10,
@@ -209,7 +213,62 @@ export default {
           }
         ]
       }
-      myChart.setOption(option)
+      expensePieChart.setOption(expenseOption)
+
+      // 绘制收入饼图
+      let incomePieChart = this.$echarts.init(document.getElementById('incomePieChart'))
+      const incomeOption = {
+        title: {
+          text: '收入类型分布',
+          subtext: this.incomePieData.length === 0 ? '暂无收入数据' : '',
+          left: 'center'
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b} : {c} ({d}%)'
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left',
+          data: this.incomePieData.map((item) => item.name)
+        },
+        color: [
+          '#85c7de',
+          '#e7d8c9',
+          '#CDB4DB',
+          '#c9f2c7',
+          '#FFC8DD',
+          '#FFAFCC',
+          '#BDE0FE',
+          '#A2D2FF',
+          '#FEC5BB',
+          '#D8E2DC',
+          '#B0C4B1',
+          '#EAAC8B',
+          '#88d498',
+        ],
+        series: [
+          {
+            name: '收入金额',
+            type: 'pie',
+            radius: '65%',
+            center: ['50%', '60%'],
+            data: this.incomePieData,
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            },
+            label: {
+              show: true,
+              formatter: '{b}: {c}元 ({d}%)'
+            }
+          }
+        ]
+      }
+      incomePieChart.setOption(incomeOption)
     },
     getData() {
       console.log("数据", this.userId)
@@ -263,17 +322,19 @@ export default {
     },
     getPieData() {
       let userId = ""
-
       if(this.userId === "000000"){
         userId = "-1"
       }else {
         userId = this.userId
       }
+
+      // 获取支出类型数据
       get('/bill/statisticsType', {
         houseId: sessionStorage.getItem('houseId'),
-        userId:userId,
+        userId: userId,
         timeType: this.timeType,
         onlySelf: this.onlySelf,
+        billType: 1
       }).then((res) => {
         if (res.description === 'success') {
           let newData = []
@@ -284,9 +345,31 @@ export default {
               }
             })
           }
-          this.pieData = newData
-          this.drawPie()
+          this.expensePieData = newData
         }
+
+        // 获取收入类型数据
+        get('/bill/statisticsType', {
+          houseId: sessionStorage.getItem('houseId'),
+          userId: userId,
+          timeType: this.timeType,
+          onlySelf: this.onlySelf,
+          billType: 2
+        }).then((res) => {
+          if (res.description === 'success') {
+            let newData = []
+            if (res.data && res.data.length > 0) {
+              res.data.forEach((element) => {
+                if (element.money > 0) {
+                  newData.push({ name: element.name, value: element.money })
+                }
+              })
+            }
+            this.incomePieData = newData
+            // 在两个数据都获取完成后绘制图表
+            this.drawPieCharts()
+          }
+        })
       })
     },
     changeTime() {

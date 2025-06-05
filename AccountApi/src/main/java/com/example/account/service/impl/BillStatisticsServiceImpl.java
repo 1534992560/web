@@ -70,7 +70,6 @@ public class BillStatisticsServiceImpl implements BillStatisticsService {
 
 
     private BillManageParam convertParam(BillManageParam param) {
-
         boolean isAdmin = false;
     
         if(param.getUserId() == null){
@@ -86,16 +85,24 @@ public class BillStatisticsServiceImpl implements BillStatisticsService {
 
         Date today = DateUtil.getToday();
         Date day = null;
-        if (param.getTimeType() == 1) {
+        
+        // 如果timeType为空，默认查询当月数据
+        Integer timeType = param.getTimeType();
+        if (timeType == null) {
+            timeType = 1;
+            param.setTimeType(1);
+        }
+        
+        if (timeType == 1) {
             //查询当月的账单
             day = DateUtil.getFirstDayOfMonth(today);
-        } else if (param.getTimeType() == 2) {
+        } else if (timeType == 2) {
             //查询近三个月的账单
             day = DateUtils.addMonths(today, -3);
-        } else if (param.getTimeType() == 3) {
+        } else if (timeType == 3) {
             //查询近半年的账单
             day = DateUtils.addMonths(today, -6);
-        } else if (param.getTimeType() == 4) {
+        } else if (timeType == 4) {
             //查询近一年的账单
             day = DateUtils.addYears(today, -1);
         } else {
@@ -103,6 +110,9 @@ public class BillStatisticsServiceImpl implements BillStatisticsService {
             if (!StringUtils.isBlank(param.getBeginDate()) && !StringUtils.isBlank(param.getEndDate())) {
                 param.setBeginTime(DateUtil.stringToDate(param.getBeginDate(), DateUtil.fullDayFormat));
                 param.setEndTime(DateUtil.stringToDate(param.getEndDate(), DateUtil.fullDayFormat));
+            } else {
+                // 如果没有自定义日期，默认查询当月数据
+                day = DateUtil.getFirstDayOfMonth(today);
             }
         }
         param.setBeginTime(day);

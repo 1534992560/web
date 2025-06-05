@@ -86,6 +86,26 @@
             </el-option>
           </el-select>
         </div>
+        <div
+          class="accounts-manage-top-item"
+          :style="this.params.billType === '1' ? 'display: none' : ''"
+        >
+          <span class="search-name">收入类型</span>
+          <el-select
+            style="width: 250px; margin-right: 20px"
+            v-model="params.incomeId"
+            placeholder="请选择"
+            @change="changeIncomeId"
+          >
+            <el-option
+              v-for="item in allIncomeList"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            >
+            </el-option>
+          </el-select>
+        </div>
 
         <el-button
           type="primary"
@@ -106,6 +126,7 @@
           form = {
             billType: '1',
             consumptionId: '',
+            incomeId: '',
             recordTime: '',
             money: '',
             remark: '',
@@ -113,32 +134,30 @@
         "
       >
         <el-form :model="form" :rules="rules" ref="form">
-          <el-form-item
-            label="账单类型"
-            :label-width="formLabelWidth"
-            prop="billType"
-          >
-            <el-radio v-model="form.billType" label="1">支出</el-radio>
-            <el-radio v-model="form.billType" label="2">收入</el-radio>
+          <el-form-item label="账单类型" prop="billType">
+            <el-select v-model="form.billType" placeholder="请选择账单类型" @change="handleBillTypeChange">
+              <el-option label="支出" value="1"></el-option>
+              <el-option label="收入" value="2"></el-option>
+            </el-select>
           </el-form-item>
-          <el-form-item
-            :style="form.billType === '2' ? 'display: none' : ''"
-            label="消费类型"
-            :label-width="formLabelWidth"
-            prop="consumptionId"
-          >
-            <el-select
-              style="width: 300px"
-              v-model="form.consumptionId"
-              placeholder="请选择"
-            >
+          <el-form-item label="支出类型" prop="consumptionId" v-if="form.billType === '1'">
+            <el-select v-model="form.consumptionId" placeholder="请选择支出类型">
               <el-option
                 v-for="item in consumeList"
                 :key="item.id"
                 :label="item.name"
                 :value="item.id"
-              >
-              </el-option>
+              ></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="收入类型" prop="incomeId" v-if="form.billType === '2'">
+            <el-select v-model="form.incomeId" placeholder="请选择收入类型">
+              <el-option
+                v-for="item in incomeList"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              ></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="金额" :label-width="formLabelWidth" prop="money">
@@ -181,6 +200,7 @@
               form = {
                 billType: '1',
                 consumptionId: '',
+                incomeId: '',
                 recordTime: '',
                 money: '',
                 remark: '',
@@ -210,7 +230,10 @@
             {{ scope.row.billType === 2 ? '收入' : '支出' }}
           </template>
         </el-table-column>
-        <el-table-column prop="consumptionName" label="消费类型">
+        <el-table-column label="类型名称">
+          <template slot-scope="scope">
+            {{ scope.row.billType === 2 ? scope.row.incomeName : scope.row.consumptionName }}
+          </template>
         </el-table-column>
         <el-table-column prop="money" label="金额"> </el-table-column>
         <el-table-column
@@ -272,10 +295,26 @@ export default {
         if (!reg.test(value)) {
           callback(new Error('金额为整数或最多两位小数'))
         }
-
         callback()
       }
     }
+
+    let validateConsumptionId = (rule, value, callback) => {
+      if (this.form.billType === '1' && !value) {
+        callback(new Error('支出类型不能为空'))
+      } else {
+        callback()
+      }
+    }
+
+    let validateIncomeId = (rule, value, callback) => {
+      if (this.form.billType === '2' && !value) {
+        callback(new Error('收入类型不能为空'))
+      } else {
+        callback()
+      }
+    }
+
     return {
       accountModalVisible: false,
       tableData: [],
@@ -296,23 +335,24 @@ export default {
       form: {
         billType: '1',
         consumptionId: '',
+        incomeId: '',
         recordTime: '',
         money: '',
         remark: '',
       },
       rules: {
         billType: [
-          { required: true, message: '消费类型不能为空', trigger: 'change' },
+          { required: true, message: '账单类型不能为空', trigger: 'change' },
         ],
         money: [
           { required: true, message: '金额不能为空' },
           { validator: validateMoney, trigger: 'change' },
         ],
         consumptionId: [
-          {
-            required: this.billType === '1' ? true : false,
-            message: '消费类型不能为空',
-          },
+          { validator: validateConsumptionId, trigger: 'change' }
+        ],
+        incomeId: [
+          { validator: validateIncomeId, trigger: 'change' }
         ],
         recordTime: [{ required: true, message: '日期不能为空' }],
       },
@@ -321,6 +361,8 @@ export default {
       keyWords: '',
       allConsumeList: [],
       consumeList: [],
+      allIncomeList: [],
+      incomeList: [],
       pageNum: 1,
       pageSize: 10,
       total: 0,
@@ -328,6 +370,7 @@ export default {
         houseId: sessionStorage.getItem('houseId'),
         userId: '000000',
         consumptionId: '000000',
+        incomeId: '000000',
         billType: '000000',
         onlySelf: false,
       },
@@ -347,6 +390,7 @@ export default {
     this.getList()
     this.getUser()
     this.getConsumeList()
+    this.getIncomeList()
     
     this.startAutoUpdate()
   },
@@ -384,6 +428,31 @@ export default {
         }
       })
     },
+    getIncomeList() {
+      get('/incomeType/query', {
+        houseId: this.params.houseId,
+      }).then((res) => {
+        this.loading = false
+        if (res.description === 'success') {
+          const currentIncomeId = this.params.incomeId
+          
+          this.incomeList = JSON.parse(JSON.stringify(res.data))
+          this.allIncomeList = JSON.parse(JSON.stringify(res.data))
+          this.allIncomeList.unshift({
+            id: '000000',
+            name: '全部',
+          })
+
+          if (currentIncomeId) {
+            const incomeExists = this.allIncomeList.some(type => type.id === currentIncomeId)
+            if (!incomeExists) {
+              this.params.incomeId = ''
+              this.getList()
+            }
+          }
+        }
+      })
+    },
     tableRowClassName({ rowIndex }) {
       if (rowIndex === 1) {
         return 'warning-row'
@@ -399,6 +468,7 @@ export default {
             userId: sessionStorage.getItem('userId'),
             houseId: sessionStorage.getItem('houseId'),
             consumptionId: this.form.consumptionId,
+            incomeId: this.form.incomeId,
             billType: this.form.billType,
             money: this.form.money,
             remark: this.form.remark,
@@ -406,7 +476,10 @@ export default {
               'YYYY-MM-DD HH:mm:ss'
             ),
           }
-          if (this.form.billType === '2') {
+          // 根据账单类型设置相应的字段
+          if (this.form.billType === '1') { // 支出类型
+            params.incomeId = 0
+          } else if (this.form.billType === '2') { // 收入类型
             params.consumptionId = 0
           }
           if (this.modalTitle === '编辑账单') {
@@ -420,6 +493,7 @@ export default {
                 this.form = {
                   billType: '1',
                   consumptionId: '',
+                  incomeId: '',
                   recordTime: '',
                   money: '',
                   remark: '',
@@ -443,12 +517,15 @@ export default {
     },
     getList() {
       this.loading = true
-      let { userId, consumptionId, billType } = this.params
+      let { userId, consumptionId, incomeId, billType } = this.params
       if (userId === '000000') {
         userId = "-1"
       }
       if (consumptionId === '000000') {
         consumptionId = ''
+      }
+      if (incomeId === '000000') {
+        incomeId = ''
       }
       if (billType === '000000') {
         billType = ''
@@ -457,6 +534,7 @@ export default {
         ...this.params,
         userId: userId,
         consumptionId,
+        incomeId,
         billType,
         pageNum: this.pageNum,
         pageSize: this.pageSize,
@@ -477,8 +555,17 @@ export default {
       this.pageNum = 1
       if (type !== '0') {
         this.params.billType = type
+        // 清空不相关的类型选择
+        if (type === '1') {
+          this.params.incomeId = '000000'
+        } else if (type === '2') {
+          this.params.consumptionId = '000000'
+        }
       } else {
         delete this.params.billType
+        // 清空所有类型选择
+        this.params.consumptionId = '000000'
+        this.params.incomeId = '000000'
       }
       this.getList()
     },
@@ -516,6 +603,7 @@ export default {
       this.accountModalVisible = true
       this.form.billType = row.billType + ''
       this.form.consumptionId = row.consumptionId
+      this.form.incomeId = row.incomeId
       this.form.money = row.money
       this.form.recordTime = row.recordTime
       this.form.remark = row.remark
@@ -561,7 +649,25 @@ export default {
       this.updateTimer = setInterval(() => {
         this.getUser()
         this.getConsumeList()
+        this.getIncomeList()
       }, 3000)
+    },
+    changeIncomeId(id) {
+      this.pageNum = 1
+      if (id !== '0') {
+        this.params.incomeId = id
+      } else {
+        delete this.params.incomeId
+      }
+      this.getList()
+    },
+    handleBillTypeChange(value) {
+      // 清空不相关的类型选择
+      if (value === '1') {
+        this.form.incomeId = ''
+      } else if (value === '2') {
+        this.form.consumptionId = ''
+      }
     },
   },
 }
