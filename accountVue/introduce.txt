@@ -1,0 +1,5 @@
+main.js为路由配置
+App.vue为主页面，
+utils向后端发送请求
+assets为静态资源
+components为页面的组件
