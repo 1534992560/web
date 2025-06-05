@@ -2,7 +2,6 @@ package com.example.account.service;
 
 
 import com.example.account.entity.User;
-import com.example.account.entity.UserExample;
 import com.example.account.param.BaseUserParam;
 import com.example.account.param.RemoveUserParam;
 import com.example.account.param.TransferUserParam;

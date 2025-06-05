@@ -340,7 +340,7 @@ export default {
 
   .menu:hover {
     width: 240px;
-  }
+}
 
   .title span {
     display: none;

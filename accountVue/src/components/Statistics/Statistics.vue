@@ -51,7 +51,7 @@
       </div>
       <div class="chart-wrapper">
         <div id="pieChart" class="chart"></div>
-      </div>
+    </div>
     </div>
   </div>
 </template>
@@ -413,7 +413,7 @@ export default {
     background: #409EFF;
     color: white;
     box-shadow: none;
-  }
+}
 }
 
 .charts-container {

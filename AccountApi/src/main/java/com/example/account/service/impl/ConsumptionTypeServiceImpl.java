@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 
-
 @Service
 public class ConsumptionTypeServiceImpl implements ConsumptionTypeService {
 
@@ -26,7 +25,6 @@ public class ConsumptionTypeServiceImpl implements ConsumptionTypeService {
         List<ConsumptionType> list = consumptionTypeMapper.selectByHouseId(param.getHouseId());
         return Result.success(list);
     }
-
 
     @Override
     public Result addConsumptionType(ConsumptionTypeParam param) {
@@ -55,9 +53,8 @@ public class ConsumptionTypeServiceImpl implements ConsumptionTypeService {
 
     @Override
     public Result updateConsumptionType(UpdateConsumptionTypeParam param) {
-
         ConsumptionType record = consumptionTypeMapper.selectByPrimaryKey(param.getId());
-        if(record.getIsCustom() == 0 || null == record){
+        if (record == null || record.getIsCustom() == 0) {
             return Result.failure(ReturnCode.UPDATE_CONSUMTYPE_FAIL);
         }
 
@@ -77,7 +74,7 @@ public class ConsumptionTypeServiceImpl implements ConsumptionTypeService {
     @Override
     public Result deleteConsumptionType(ConsumptionTypeParam param) {
         ConsumptionType record = consumptionTypeMapper.selectByPrimaryKey(param.getId());
-        if(record.getIsCustom() == 0 || null == record){
+        if (record == null || record.getIsCustom() == 0) {
             return Result.failure(ReturnCode.DELETE_CONSUMTYPE_FAIL);
         }
 

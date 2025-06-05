@@ -2,7 +2,7 @@ package com.example.account.service.impl;
 
 import com.example.account.entity.House;
 import com.example.account.entity.User;
-import com.example.account.entity.UserExample;
+
 import com.example.account.enums.ReturnCode;
 import com.example.account.mapper.HouseMapper;
 import com.example.account.mapper.UserMapper;
@@ -33,10 +33,10 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private UserMapper userMapper;
-    
+
     @Autowired
     private HouseMapper houseMapper;
-    
+
     @Autowired
     private EmailService emailService;
 
@@ -240,33 +240,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Result updateMyPsw(UpdateUserParam param) {
-        try {
-            // 验证原密码
-            UserExample example = new UserExample();
-            example.createCriteria()
-                  .andNameEqualTo(param.getName())
-                  .andPasswordEqualTo(MD5Utils.EncoderByMd5(param.getOldPassword()));
-
-            List<User> users = userMapper.selectByExample(example);
-            if (users.isEmpty()) {
-                return Result.failure(ReturnCode.LOGIN_FAIL);
-            }
-
-            // 更新密码
-            UpdateUserParam updateParam = new UpdateUserParam();
-            updateParam.setId(users.get(0).getId());
-            updateParam.setNewPassword(MD5Utils.EncoderByMd5(param.getNewPassword()));
-            
-            userMapper.updateMyPsw(updateParam);
-            return Result.success();
-        } catch (Exception e) {
-            log.error("Update password failed: ", e);
-            throw e;
-        }
-    }
-
-    @Override
     public Result checkEmail(String email) {
         try {
             return Result.success(isEmailExists(email) ? "exists" : "not_exists");
@@ -274,6 +247,57 @@ public class UserServiceImpl implements UserService {
             log.error("Check email failed: ", e);
             throw e;
         }
+    }
+
+    @Override
+    public boolean isAdmin(Integer id) {
+        try {
+            User user = userMapper.selectByPrimaryKey(id);
+            return user != null && user.getIsAdmin() == 1 && user.getIsDelete() == 0;
+        } catch (Exception e) {
+            log.error("Check admin permission failed: ", e);
+            return false;
+        }
+    }
+
+    @Override
+    public Result updateMyPsw(UpdateUserParam param) {
+        try {
+            // 验证参数
+            if (StringUtils.isEmpty(param.getName()) || 
+                StringUtils.isEmpty(param.getOldPassword()) || 
+                StringUtils.isEmpty(param.getNewPassword())) {
+                return Result.failure(ReturnCode.PARAM_ERROR);
+            }
+
+            // 验证原密码
+            String oldPasswordMd5 = MD5Utils.EncoderByMd5(param.getOldPassword());
+            User user = userMapper.selectByNameAndPasswordForUpdate(param.getName(), oldPasswordMd5);
+            if (user == null) {
+                return Result.failure(ReturnCode.LOGIN_FAIL);
+            }
+
+            // 更新密码
+            UpdateUserParam updateParam = new UpdateUserParam();
+            updateParam.setId(user.getId());
+            updateParam.setNewPassword(MD5Utils.EncoderByMd5(param.getNewPassword()));
+            
+            int result = userMapper.updateMyPsw(updateParam);
+            if (result <= 0) {
+                return Result.failure(ReturnCode.UPDATE_PASSWORD_FAIL);
+            }
+
+            return Result.success();
+        } catch (Exception e) {
+            log.error("Update password failed: ", e);
+            throw e;
+        }
+    }
+
+    private boolean validateRegisterParam(BaseUserParam param) {
+        return !StringUtils.isEmpty(param.getName()) &&
+               !StringUtils.isEmpty(param.getPassword()) &&
+               !StringUtils.isEmpty(param.getEmail());
     }
 
     // 私有辅助方法
@@ -286,16 +310,38 @@ public class UserServiceImpl implements UserService {
 
     private boolean validateAddUserParams(BaseUserParam param) {
         return !StringUtils.isEmpty(param.getName()) &&
-               !StringUtils.isEmpty(param.getPassword()) &&
-               !StringUtils.isEmpty(param.getEmail());
+               !StringUtils.isEmpty(param.getPassword());
+    }
+
+    private boolean validateUpdatePasswordParam(UpdateUserParam param) {
+        return param != null && 
+               param.getId() != null && 
+               !StringUtils.isEmpty(param.getOldPassword()) && 
+               !StringUtils.isEmpty(param.getNewPassword());
+    }
+
+    private boolean validateResetPasswordParam(BaseUserParam param) {
+        return param.getId() != null &&
+               param.getTargetUserId() != null &&
+               !StringUtils.isEmpty(param.getNewPassword());
+    }
+
+    private boolean validateRemoveUser(User fromUser, User toUser) {
+        return fromUser != null &&
+               toUser != null &&
+               fromUser.getIsAdmin() == 1 &&
+               toUser.getHouseId().equals(fromUser.getHouseId()) &&
+               toUser.getIsAdmin() == 0;
+    }
+
+    private boolean validateEmailResetPasswordParam(BaseUserParam param) {
+        return !StringUtils.isEmpty(param.getEmail()) &&
+               !StringUtils.isEmpty(param.getVerificationCode()) &&
+               !StringUtils.isEmpty(param.getNewPassword());
     }
 
     private boolean isEmailExists(String email) {
-        UserExample example = new UserExample();
-        example.createCriteria()
-              .andEmailEqualTo(email)
-              .andIsDeleteEqualTo((byte) 0);
-        return !userMapper.selectByExample(example).isEmpty();
+        return userMapper.selectByEmail(email) != null;
     }
 
     private boolean isUserNameExists(String name) {
@@ -309,7 +355,8 @@ public class UserServiceImpl implements UserService {
         house.setUpdateTime(new Date());
         house.setBudget(param.getBudget());
         house.setIsDelete(0);
-        houseMapper.insertSelective(house);
+        houseMapper.insert(house);
+        
         return houseMapper.selectByAdminName(param.getName());
     }
 
@@ -347,20 +394,11 @@ public class UserServiceImpl implements UserService {
     }
 
     private List<User> findUserByNameAndPassword(String name, String password) {
-        UserExample example = new UserExample();
-        example.createCriteria()
-              .andNameEqualTo(name)
-              .andPasswordEqualTo(password);
-        return userMapper.selectByExample(example);
+        return userMapper.selectByNameAndPassword(name, password);
     }
 
     private User findUserByEmail(String email) {
-        UserExample example = new UserExample();
-        example.createCriteria()
-              .andEmailEqualTo(email)
-              .andIsDeleteEqualTo((byte) 0);
-        List<User> users = userMapper.selectByExample(example);
-        return users.isEmpty() ? null : users.get(0);
+        return userMapper.selectByEmail(email);
     }
 
     private String generateRandomPassword() {
@@ -370,14 +408,5 @@ public class UserServiceImpl implements UserService {
             password.append(CHAR_LIST.charAt(random.nextInt(CHAR_LIST.length())));
         }
         return password.toString();
-    }
-
-    @Override
-    public boolean isAdmin(Integer id) {
-        User user = userMapper.selectByPrimaryKey(id);
-        if (null == user) {
-            return false;
-        }
-        return user.getIsAdmin() == 1 ? true : false;
     }
 }

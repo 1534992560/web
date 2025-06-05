@@ -13,36 +13,7 @@ import java.util.Date;
 @Mapper
 @Repository
 public interface BillMapper {
-    @Select("SELECT * FROM bill WHERE id = #{id}")
-    Bill selectByPrimaryKey(Integer id);
 
-    @Select("SELECT * FROM bill WHERE house_id = #{houseId} AND is_delete = 0 ORDER BY create_time DESC")
-    List<Bill> selectByHouseId(Integer houseId);
-
-    @Select("SELECT * FROM bill WHERE house_id = #{houseId} AND create_time BETWEEN #{startTime} AND #{endTime} AND is_delete = 0")
-    List<Bill> selectByTimeRange(@Param("houseId") Integer houseId, 
-                                @Param("startTime") Date startTime, 
-                                @Param("endTime") Date endTime);
-
-    @Select("SELECT * FROM bill WHERE house_id = #{houseId} AND consumption_id = #{typeId} " +
-            "AND create_time BETWEEN #{startTime} AND #{endTime} AND is_delete = 0")
-    List<Bill> selectByTypeAndTimeRange(@Param("houseId") Integer houseId,
-                                       @Param("typeId") Integer typeId,
-                                       @Param("startTime") Date startTime,
-                                       @Param("endTime") Date endTime);
-
-    @Select("SELECT SUM(money) FROM bill WHERE house_id = #{houseId} " +
-            "AND create_time BETWEEN #{startTime} AND #{endTime} AND is_delete = 0")
-    Double sumMoneyByTimeRange(@Param("houseId") Integer houseId,
-                              @Param("startTime") Date startTime,
-                              @Param("endTime") Date endTime);
-
-    @Select("SELECT SUM(money) FROM bill WHERE house_id = #{houseId} AND consumption_id = #{typeId} " +
-            "AND create_time BETWEEN #{startTime} AND #{endTime} AND is_delete = 0")
-    Double sumMoneyByTypeAndTimeRange(@Param("houseId") Integer houseId,
-                                     @Param("typeId") Integer typeId,
-                                     @Param("startTime") Date startTime,
-                                     @Param("endTime") Date endTime);
 
     @Select({
         "<script>",
@@ -178,28 +149,6 @@ public interface BillMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertSelective(Bill record);
 
-    @Insert("INSERT INTO bill(money, consumption_id, remark, record_time, user_id, house_id, " +
-            "bill_type, create_time, update_time, is_delete) " +
-            "VALUES(#{money}, #{consumptionId}, #{remark}, #{recordTime}, #{userId}, #{houseId}, " +
-            "#{billType}, #{createTime}, #{updateTime}, #{isDelete})")
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(Bill record);
-
-    @Delete("DELETE FROM bill WHERE id = #{id}")
-    int deleteByPrimaryKey(Integer id);
-
-    @Update("UPDATE bill SET " +
-            "money = #{money}, " +
-            "consumption_id = #{consumptionId}, " +
-            "remark = #{remark}, " +
-            "record_time = #{recordTime}, " +
-            "user_id = #{userId}, " +
-            "house_id = #{houseId}, " +
-            "bill_type = #{billType}, " +
-            "update_time = #{updateTime}, " +
-            "is_delete = #{isDelete} " +
-            "WHERE id = #{id}")
-    int updateByPrimaryKey(Bill record);
 
     @Update({
         "<script>",

@@ -2,6 +2,7 @@ package com.example.account.entity;
 
 import java.io.Serializable;
 import java.util.Date;
+import javax.validation.constraints.NotNull;
 
 public class ConsumptionType implements Serializable {
     private Integer id;
@@ -12,6 +13,7 @@ public class ConsumptionType implements Serializable {
 
     private Date updateTime;
 
+    @NotNull(message = "家庭ID不能为空")
     private Integer houseId;
 
     private Integer isCustom;
