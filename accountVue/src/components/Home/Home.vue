@@ -203,79 +203,100 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 #home {
-  height: 100vh;
   display: flex;
-  background-color: #f0f2f5;
+  height: 100vh;
+  background: #f5f7fa;
 }
 
 .menu {
-  width: 220px;
-  background: #545c64;
-  box-shadow: 2px 0 6px rgba(0, 21, 41, 0.35);
+  width: 240px;
+  background: #2c3e50;
+  color: white;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
 }
 
 .title {
+  height: 60px;
   display: flex;
   align-items: center;
-  padding: 16px;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 600;
+  padding: 0 20px;
+  background: #243342;
 }
 
 .title img {
-  width: 32px;
-  height: 32px;
-  margin-right: 12px;
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
 }
 
-.el-menu {
+.title span {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: white;
+}
+
+.el-menu-list {
   border-right: none;
+  flex: 1;
+}
+
+.el-menu-item {
+  height: 56px;
+  line-height: 56px;
+  font-size: 14px;
+}
+
+.el-menu-item i {
+  margin-right: 10px;
+  font-size: 18px;
 }
 
 .wrap {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  min-width: 0;
 }
 
 .header {
+  height: 60px;
+  background: white;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  height: 64px;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  align-items: center;
+  padding: 0 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .welcome-text {
-  font-size: 14px;
-  color: #666;
-  max-width: 200px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 16px;
+  color: #606266;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
 }
 
 .el-dropdown-link {
   cursor: pointer;
   font-size: 20px;
-  color: #666;
+  color: #606266;
+}
+
+.el-dropdown-link:hover {
+  color: #409EFF;
 }
 
 .logout-icon {
   font-size: 20px;
-  color: #666;
+  color: #606266;
   cursor: pointer;
   transition: color 0.3s;
 }
@@ -286,21 +307,51 @@ export default {
 
 .main-content {
   flex: 1;
-  padding: 24px;
+  padding: 20px;
   overflow-y: auto;
+  min-height: 0;
 }
 
-/* 自定义滚动条样式 */
-.main-content::-webkit-scrollbar {
-  width: 6px;
+/* 密码修改对话框样式 */
+.el-dialog {
+  border-radius: 8px;
 }
 
-.main-content::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
+.el-dialog__header {
+  padding: 20px;
+  border-bottom: 1px solid #ebeef5;
 }
 
-.main-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.el-dialog__body {
+  padding: 30px 20px;
+}
+
+.el-dialog__footer {
+  padding: 20px;
+  border-top: 1px solid #ebeef5;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 768px) {
+  .menu {
+    width: 64px;
+    transition: width 0.3s;
+  }
+
+  .menu:hover {
+    width: 240px;
+  }
+
+  .title span {
+    display: none;
+  }
+
+  .menu:hover .title span {
+    display: inline;
+  }
+
+  .welcome-text {
+    display: none;
+  }
 }
 </style>

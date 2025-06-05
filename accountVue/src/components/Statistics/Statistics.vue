@@ -1,35 +1,32 @@
 <template>
-  <div>
-    <div class="top">
-      <div class="card">
-        <div class="card-item">
-          <div>
-            收入<span>{{ allData.totalIncome }}</span
-            >元
+  <div class="statistics">
+    <div class="statistics-header">
+      <div class="cards-container">
+        <div class="stat-card income">
+          <div class="stat-content">
+            <div class="stat-label">收入</div>
+            <div class="stat-value">{{ allData.totalIncome }}元</div>
           </div>
         </div>
-        <div class="card-item">
-          <div>
-            支出<span>{{ allData.totalExpend }}</span
-            >元
+        <div class="stat-card expense">
+          <div class="stat-content">
+            <div class="stat-label">支出</div>
+            <div class="stat-value">{{ allData.totalExpend }}元</div>
           </div>
         </div>
-        <div class="card-item">
-          <div>
-            余额<span>{{ allData.totalRemain }}</span
-            >元
+        <div class="stat-card balance">
+          <div class="stat-content">
+            <div class="stat-label">余额</div>
+            <div class="stat-value">{{ allData.totalRemain }}元</div>
           </div>
         </div>
-        <!-- <div class="card-item">
-          <div>预算<span>{{ allData.totalBudget }}</span>元</div>
-        </div> -->
       </div>
-      <div class="top-options">
+      <div class="filter-options">
         <el-select
-          style="width: 290px; margin-right: 20px"
           v-model="userId"
           placeholder="请选择家庭成员"
           @change="changeUserId"
+          class="member-select"
         >
           <el-option
             v-for="item in userList"
@@ -39,7 +36,7 @@
           >
           </el-option>
         </el-select>
-        <el-radio-group v-model="timeType" @change="changeTime">
+        <el-radio-group v-model="timeType" @change="changeTime" class="time-filter">
           <el-radio-button label="1">本月</el-radio-button>
           <el-radio-button label="2">近三月</el-radio-button>
           <el-radio-button label="3">近半年</el-radio-button>
@@ -48,25 +45,22 @@
       </div>
     </div>
 
-    <div style="display: flex">
-      <div id="lineChart"></div>
-    </div>
-    <div style="display: flex">
-      <div id="pieChart"></div>
+    <div class="charts-container">
+      <div class="chart-wrapper">
+        <div id="lineChart" class="chart"></div>
+      </div>
+      <div class="chart-wrapper">
+        <div id="pieChart" class="chart"></div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import { get } from '../../utils/http'
+
 export default {
   name: 'Statistics',
-  mounted() {
-    this.getUser()
-    this.changeTime()
-    this.getPieData()
-    console.log(this.pieData)
-  },
   data() {
     return {
       timeType: '1',
@@ -81,13 +75,26 @@ export default {
       ],
       userId: '000000',
       onlySelf: false,
+      updateTimer: null,
+    }
+  },
+  mounted() {
+    this.getUser()
+    this.changeTime()
+    this.getPieData()
+    
+    this.updateTimer = setInterval(() => {
+      this.getUser()
+    }, 3000)
+  },
+  beforeDestroy() {
+    if (this.updateTimer) {
+      clearInterval(this.updateTimer)
     }
   },
   methods: {
     drawLine() {
-      // 基于准备好的dom，初始化echarts实例
       let myChart = this.$echarts.init(document.getElementById('lineChart'))
-      // 绘制图表
       myChart.setOption({
         title: {
           text: '收入支出统计',
@@ -149,7 +156,6 @@ export default {
       })
     },
     drawPie() {
-      // 基于准备好的dom，初始化echarts实例
       let myChart = this.$echarts.init(document.getElementById('pieChart'))
       
       const option = {
@@ -206,7 +212,6 @@ export default {
       myChart.setOption(option)
     },
     getData() {
-      //
       console.log("数据", this.userId)
       let userId = ""
 
@@ -232,7 +237,6 @@ export default {
             ),
           }
           console.log(this.allData.totalIncome)
-          //this.drawPie()
         }
       })
     },
@@ -275,7 +279,7 @@ export default {
           let newData = []
           if (res.data && res.data.length > 0) {
             res.data.forEach((element) => {
-              if (element.money > 0) {  // 只添加金额大于0的数据
+              if (element.money > 0) {
                 newData.push({ name: element.name, value: element.money })
               }
             })
@@ -295,11 +299,21 @@ export default {
         houseId: sessionStorage.getItem('houseId'),
       }).then((res) => {
         if (res.description === 'success') {
+          const currentUserId = this.userId
+          
           this.userList = res.data.list
           this.userList.unshift({
             id: '000000',
             name: '家庭总资产',
           })
+
+          if (currentUserId && currentUserId !== '000000') {
+            const userExists = this.userList.some(user => user.id === currentUserId)
+            if (!userExists) {
+              this.userId = '000000'
+              this.changeTime()
+            }
+          }
         }
       })
     },
@@ -317,53 +331,138 @@ export default {
 </script>
 
 <style>
-.top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.top-options {
-  display: flex;
-  align-items: flex-end;
-}
-.card {
-  display: flex;
-  padding-bottom: 20px;
-}
-.card-item {
-  display: flex;
-  flex-direction: column;
-  padding: 20px 30px;
-  border: 1px solid #f0f0f0;
-  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%);
-  border-radius: 6px;
-  margin-right: 20px;
+.statistics {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  height: 100%;
 }
 
-.card-item:nth-child(1) span {
-  padding: 0 5px;
-  color: #67c23a;
+.statistics-header {
+  margin-bottom: 30px;
 }
-.card-item:nth-child(2) span {
-  color: #e6a23c;
-  padding: 0 5px;
+
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
 }
-.card-item:nth-child(3) span {
-  color: #f56c6c;
-  padding: 0 5px;
+
+.stat-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
 }
-.card-item:nth-child(4) span {
-  color: #909399;
-  padding: 0 5px;
+
+.stat-card:hover {
+  transform: translateY(-5px);
 }
-#lineChart {
-  width: calc(100% - 40px);
-  padding: 20px 20px;
-  height: 600px;
+
+.income {
+  background: linear-gradient(135deg, #88d498 0%, #5aaa6f 100%);
 }
-#pieChart {
-  width: calc(50% - 40px);
-  padding: 20px 20px;
+
+.expense {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+}
+
+.balance {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+
+.stat-content {
+  color: white;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 16px;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.filter-options {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.member-select {
+  width: 200px;
+}
+
+.time-filter {
+  .el-radio-button__inner {
+    padding: 10px 20px;
+    border: none;
+    background: #f5f7fa;
+    color: #606266;
+  }
+
+  .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+    background: #409EFF;
+    color: white;
+    box-shadow: none;
+  }
+}
+
+.charts-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.chart-wrapper {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.chart {
+  width: 100%;
   height: 400px;
+}
+
+@media screen and (max-width: 1200px) {
+  .charts-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .cards-container {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-options {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .member-select {
+    width: 100%;
+  }
+
+  .time-filter {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .chart {
+    height: 300px;
+  }
 }
 </style>

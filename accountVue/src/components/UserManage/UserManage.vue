@@ -2,13 +2,13 @@
   <div class="user-manage">
     <!-- 顶部操作栏 -->
     <div class="action-bar">
-      <el-button type="primary" icon="el-icon-plus" @click="dialogFormVisible = true">
+      <el-button type="primary" icon="el-icon-plus" @click="dialogFormVisible = true" class="add-button">
         新增成员
       </el-button>
     </div>
 
     <!-- 用户列表 -->
-    <el-card class="table-card" v-loading="loading">
+    <div class="table-wrapper" v-loading="loading">
       <el-table
         class="user-table"
         :data="tableData"
@@ -30,23 +30,28 @@
         </el-table-column>
         <el-table-column label="操作" width="280" align="center">
           <template slot-scope="scope">
-            <el-button
-              type="text"
-              size="small"
-              @click="resetPassWord(scope.row)"
-            >重置密码</el-button>
-            <el-divider direction="vertical"></el-divider>
-            <el-button
-              type="text"
-              size="small"
-              @click="confirmDelete(scope.row)"
-            >删除</el-button>
-            <el-divider direction="vertical"></el-divider>
-            <el-button
-              type="text"
-              size="small"
-              @click="confirmTransfer(scope.row)"
-            >转让管理员</el-button>
+            <div class="action-buttons">
+              <el-button
+                type="text"
+                size="small"
+                class="action-button reset"
+                @click="resetPassWord(scope.row)"
+              >重置密码</el-button>
+              <el-divider direction="vertical"></el-divider>
+              <el-button
+                type="text"
+                size="small"
+                class="action-button delete"
+                @click="confirmDelete(scope.row)"
+              >删除</el-button>
+              <el-divider direction="vertical"></el-divider>
+              <el-button
+                type="text"
+                size="small"
+                class="action-button transfer"
+                @click="confirmTransfer(scope.row)"
+              >转让管理员</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -63,7 +68,7 @@
         >
         </el-pagination>
       </div>
-    </el-card>
+    </div>
 
     <!-- 新增用户对话框 -->
     <el-dialog
@@ -71,6 +76,7 @@
       :visible.sync="dialogFormVisible"
       width="400px"
       destroy-on-close
+      custom-class="user-dialog"
     >
       <el-form :model="form" :rules="rules" ref="form" label-width="80px">
         <el-form-item label="账号" prop="name">
@@ -83,7 +89,7 @@
           <el-input v-model="form.email" placeholder="请输入邮箱"></el-input>
         </el-form-item>
       </el-form>
-      <div slot="footer">
+      <div slot="footer" class="dialog-footer">
         <el-button @click="closeDialog">取 消</el-button>
         <el-button type="primary" @click="addUser('form')">确 定</el-button>
       </div>
@@ -95,9 +101,10 @@
       width="400px"
       title="重置密码结果"
       destroy-on-close
+      custom-class="password-dialog"
     >
       <div class="password-result">{{ resetPassword }}</div>
-      <div slot="footer">
+      <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="passwordModalVisible = false">确定</el-button>
       </div>
     </el-dialog>
@@ -132,24 +139,26 @@ export default {
 
     const validateEmail = (rule, value, callback) => {
       if (!value) {
-        callback(new Error('请输入邮箱'))
+        callback(new Error('请输入邮箱'));
       } else {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        // 邮箱格式验证，必须以.com结尾
+        const emailRegex = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+\.com$/;
         if (!emailRegex.test(value)) {
-          callback(new Error('请输入正确的邮箱格式'))
-          return
+          callback(new Error('邮箱格式应为：Username@domain.com'));
+          return;
         }
+        // 验证邮箱是否已被注册
         post('/user/checkEmail', { email: value })
           .then(res => {
             if (res.description === 'success' && res.data === 'exists') {
-              callback(new Error('该邮箱已被注册'))
+              callback(new Error('该邮箱已被注册'));
             } else {
-              callback()
+              callback();
             }
           })
           .catch(() => {
-            callback(new Error('邮箱验证失败，请重试'))
-          })
+            callback(new Error('邮箱验证失败，请重试'));
+          });
       }
     }
 
@@ -306,50 +315,178 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 .user-manage {
+  padding: 20px;
   height: 100%;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
 }
 
 .action-bar {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-.table-card {
-  background: #fff;
+.add-button {
+  padding: 12px 20px;
+  font-weight: 500;
   border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.add-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table-wrapper {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .user-table {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.el-table {
+  border-radius: 8px;
+}
+
+.el-table th {
+  background-color: #f5f7fa !important;
+  color: #606266;
+  font-weight: 500;
+  height: 50px;
+}
+
+.el-table td {
+  padding: 12px 0;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.action-button {
+  padding: 4px 8px;
+  font-size: 13px;
+  transition: all 0.3s;
+}
+
+.action-button.reset {
+  color: #409EFF;
+}
+
+.action-button.delete {
+  color: #F56C6C;
+}
+
+.action-button.transfer {
+  color: #67C23A;
+}
+
+.action-button:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
 }
 
 .pagination-container {
-  padding: 16px 0;
+  padding: 20px 0;
   text-align: right;
+}
+
+/* 对话框样式 */
+.user-dialog,
+.password-dialog {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.el-dialog__header {
+  background: #f8f9fb;
+  padding: 20px;
+  margin: 0;
+}
+
+.el-dialog__title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.el-dialog__body {
+  padding: 30px 20px;
+}
+
+.el-form-item {
+  margin-bottom: 22px;
+}
+
+.el-form-item__label {
+  font-weight: normal;
+  color: #606266;
+}
+
+.el-input__inner {
+  height: 40px;
+  line-height: 40px;
+  border-radius: 4px;
+}
+
+.dialog-footer {
+  padding: 20px;
+  border-top: 1px solid #ebeef5;
+  text-align: right;
+}
+
+.dialog-footer .el-button {
+  padding: 9px 20px;
 }
 
 .password-result {
   text-align: center;
-  font-size: 14px;
-  color: #666;
+  font-size: 16px;
+  color: #606266;
   padding: 20px 0;
 }
 
-/* Element UI 样式覆盖 */
-:deep(.el-table) {
-  border: 1px solid #ebeef5;
-}
+/* 响应式布局 */
+@media screen and (max-width: 768px) {
+  .user-manage {
+    padding: 15px;
+  }
 
-:deep(.el-table th) {
-  background-color: #f5f7fa;
-}
+  .action-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
 
-:deep(.el-button--text) {
-  padding: 0 8px;
-}
+  .el-divider--vertical {
+    display: none;
+  }
 
-:deep(.el-dialog__body) {
-  padding: 20px 40px;
+  .action-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .el-dialog {
+    width: 90% !important;
+    margin: 0 auto;
+  }
+
+  .el-form-item__label {
+    float: none;
+    text-align: left;
+    margin-bottom: 8px;
+  }
+
+  .el-form-item__content {
+    margin-left: 0 !important;
+  }
 }
 </style>
