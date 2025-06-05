@@ -68,7 +68,7 @@
         </div>
         <div
           class="accounts-manage-top-item"
-          :style="this.params.billType === '2' ? 'display: none' : ''"
+          :style="this.params.billType === '1' ? 'display: none' : ''"
         >
           <span class="search-name">消费类型</span>
           <el-select
@@ -158,6 +158,7 @@
               type="datetime"
               placeholder="选择日期"
               style="width: 300px"
+              :picker-消费类型="pickerOptions"
             >
             </el-date-picker>
           </el-form-item>
@@ -181,7 +182,7 @@
               form = {
                 billType: '1',
                 consumptionId: '',
-                recordTime: '',
+                recordTime: new Date().toUTCString(),
                 money: '',
                 remark: '',
               }
@@ -296,7 +297,7 @@ export default {
       form: {
         billType: '1',
         consumptionId: '',
-        recordTime: '',
+        recordTime: new Date().toUTCString(),
         money: '',
         remark: '',
       },
@@ -340,20 +341,12 @@ export default {
           return time.getTime() > Date.now()
         },
       },
-      updateTimer: null,
     }
   },
   mounted() {
     this.getList()
     this.getUser()
     this.getConsumeList()
-    
-    this.startAutoUpdate()
-  },
-  beforeDestroy() {
-    if (this.updateTimer) {
-      clearInterval(this.updateTimer)
-    }
   },
   methods: {
     formatterTime(row, column, cellValue) {
@@ -365,22 +358,12 @@ export default {
       }).then((res) => {
         this.loading = false
         if (res.description === 'success') {
-          const currentConsumeId = this.params.consumptionId
-          
           this.consumeList = JSON.parse(JSON.stringify(res.data))
           this.allConsumeList = JSON.parse(JSON.stringify(res.data))
           this.allConsumeList.unshift({
             id: '000000',
             name: '全部',
           })
-
-          if (currentConsumeId) {
-            const consumeExists = this.allConsumeList.some(type => type.id === currentConsumeId)
-            if (!consumeExists) {
-              this.params.consumptionId = ''
-              this.getList()
-            }
-          }
         }
       })
     },
@@ -445,6 +428,7 @@ export default {
       this.loading = true
       let { userId, consumptionId, billType } = this.params
       if (userId === '000000') {
+        // userId = sessionStorage.getItem('userId')
         userId = "-1"
       }
       if (consumptionId === '000000') {
@@ -539,239 +523,48 @@ export default {
         houseId: sessionStorage.getItem('houseId'),
       }).then((res) => {
         if (res.description === 'success') {
-          const currentUserId = this.params.userId
-          
           this.userList = res.data.list
           this.userList.unshift({
             id: '000000',
             name: '全部',
           })
-
-          if (currentUserId && currentUserId !== '000000') {
-            const userExists = this.userList.some(user => user.id === currentUserId)
-            if (!userExists) {
-              this.params.userId = '000000'
-              this.getList()
-            }
-          }
         }
       })
-    },
-    startAutoUpdate() {
-      this.updateTimer = setInterval(() => {
-        this.getUser()
-        this.getConsumeList()
-      }, 3000)
     },
   },
 }
 </script>
 
 <style>
-.accounts-manage {
-  height: 100%;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.accounts-manage-top {
-  background: #f8f9fb;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
 .accounts-manage-top-line {
   display: flex;
-  align-items: center;
-  margin-bottom: 15px;
+  padding: 0 0 20px 0;
 }
-
-.accounts-manage-top-line:last-child {
-  margin-bottom: 0;
+.search-name {
+  font-size: 14px;
+  width: 56px;
 }
-
 .accounts-manage-top-item {
   display: flex;
   align-items: center;
   margin-right: 20px;
 }
-
-.search-name {
-  font-size: 14px;
-  color: #606266;
+.accounts-manage-top-item:nth-last-child(1) {
+  margin-right: 0;
+}
+.accounts-manage-top-item span {
   margin-right: 10px;
-  white-space: nowrap;
+}
+.el-table .warning-row {
+  background: oldlace;
 }
 
-.date {
-  width: 400px;
+.el-table .success-row {
+  background: #f0f9eb;
 }
-
-/* 表格样式优化 */
 .accounts-manage-table {
-  flex: 1;
-  margin-top: 20px;
+  border: 1px solid #ebebeb;
 }
-
-.el-table {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.el-table th {
-  background-color: #f5f7fa !important;
-  color: #606266;
-  font-weight: 500;
-  height: 50px;
-}
-
-.el-table td {
-  padding: 12px 0;
-}
-
-/* 按钮样式优化 */
-.el-button--primary {
-  background: #409EFF;
-  border-color: #409EFF;
-  padding: 10px 20px;
-  height: 40px;
-  border-radius: 4px;
-  font-weight: 500;
-}
-
-.el-button--primary:hover {
-  background: #66b1ff;
-  border-color: #66b1ff;
-}
-
-/* 输入框和选择器样式 */
-.el-input__inner,
-.el-select .el-input__inner {
-  height: 40px;
-  line-height: 40px;
-  border-radius: 4px;
-}
-
-.el-input__icon {
-  line-height: 40px;
-}
-
-/* 日期选择器样式 */
-.el-date-editor.el-input,
-.el-date-editor.el-input__inner {
-  width: 400px;
-}
-
-/* 弹窗样式优化 */
-.el-dialog {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.el-dialog__header {
-  background: #f8f9fb;
-  padding: 20px;
-  margin: 0;
-}
-
-.el-dialog__title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #303133;
-}
-
-.el-dialog__body {
-  padding: 30px 20px;
-}
-
-.el-dialog__footer {
-  padding: 20px;
-  border-top: 1px solid #ebeef5;
-}
-
-.dialog-footer .el-button {
-  padding: 9px 20px;
-}
-
-/* 表单样式优化 */
-.el-form-item {
-  margin-bottom: 22px;
-}
-
-.el-form-item__label {
-  font-weight: normal;
-  color: #606266;
-}
-
-.el-textarea__inner {
-  border-radius: 4px;
-}
-
-/* 单选框组样式 */
-.el-radio {
-  margin-right: 30px;
-}
-
-.el-radio__label {
-  font-size: 14px;
-}
-
-/* 分页器样式 */
-.el-pagination {
-  margin-top: 20px;
-  padding: 0;
-  font-weight: normal;
-  color: #606266;
-}
-
-.el-pagination button {
-  background: transparent;
-}
-
-.el-pagination .el-select .el-input {
-  width: 100px;
-  margin: 0 5px;
-}
-
-/* 响应式布局 */
-@media screen and (max-width: 1200px) {
-  .accounts-manage-top-line {
-    flex-wrap: wrap;
-  }
-
-  .accounts-manage-top-item {
-    margin-bottom: 15px;
-  }
-
-  .el-date-editor.el-input,
-  .el-date-editor.el-input__inner {
-    width: 300px;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .accounts-manage-top {
-    padding: 15px;
-  }
-
-  .accounts-manage-top-item {
-    width: 100%;
-    margin-right: 0;
-  }
-
-  .el-input,
-  .el-select {
-    width: 100% !important;
-  }
-
-  .el-date-editor.el-input,
-  .el-date-editor.el-input__inner {
-    width: 100%;
-  }
+.date {
 }
 </style>
